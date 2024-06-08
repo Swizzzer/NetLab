@@ -92,20 +92,34 @@ void arp_resp(uint8_t *target_ip, uint8_t *target_mac)
  * 
  * @param buf 要处理的数据包
  * @param src_mac 源mac地址
+/**
+ * @brief 处理一个收到的arp数据包
+ * 
+ * @param buf 要处理的数据包
+ * @param src_mac 源mac地址
  */
 void arp_in(buf_t *buf, uint8_t *src_mac)
 {
     // TO-DO
+    // arp数据包的最小长度
     if(buf->len < sizeof(arp_pkt_t)) return;
     arp_pkt_t* arp = (arp_pkt_t*) buf->data;
+    // 硬件类型
     if(arp->hw_type16 != swap16(ARP_HW_ETHER)) return;
+    // 协议类型
     if(arp->pro_type16 != swap16(NET_PROTOCOL_IP)) return;
+    // 硬件地址长
     if(arp->hw_len != NET_MAC_LEN) return;
+    // 协议地址长
     if(arp->pro_len != NET_IP_LEN) return;
+    // opcode，ARP请求，ARP响应，ARP错误
     if(arp->opcode16 != swap16(ARP_HW_ETHER) && arp->opcode16 != swap16(ARP_REPLY) && arp->opcode16 != swap16(ARP_REQUEST)) return;
+    // 将目标ip和mac地址添加到arp表中
     map_set(&arp_table, arp->sender_ip, arp->sender_mac);
+    // 查看缓存中是否已经存在该ip的arp数据包
     buf_t* map_buf = map_get(&arp_buf, (void*) arp->sender_ip);
     if(map_buf == NULL){
+        // 如果是arp请求，并且是对本机的arp请求
         if(arp->opcode16 == swap16(ARP_REQUEST)){
             int flag = 1;
             for(int i = 0; i < NET_IP_LEN; i++){
@@ -120,12 +134,12 @@ void arp_in(buf_t *buf, uint8_t *src_mac)
         }
     }
     else{
+        // 如果是arp响应，直接将缓存中的arp数据包发送出去
         ethernet_out(map_buf, arp->sender_mac, NET_PROTOCOL_IP);
+        // 将缓存中的arp数据包删除
         map_delete(&arp_buf, arp->sender_ip);
     }
-
 }
-
 /**
  * @brief 处理一个要发送的数据包
  * 

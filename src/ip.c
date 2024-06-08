@@ -75,15 +75,18 @@ void ip_fragment_out(buf_t *buf, uint8_t *ip, net_protocol_t protocol, int id, u
     packet.id16 = swap16(id);
     if (mf)
     {
-        packet.flags_fragment16 = swap16(0x2000 | offset); // 当存在下一分片时，标志位为001
+        // 当存在下一分片时，标志位为001
+        packet.flags_fragment16 = swap16(0x2000 | offset);
     }
     else
     {
-        packet.flags_fragment16 = swap16(offset); // 不存在下一分片时，标志位为000
+        // 不存在下一分片时，标志位为000
+        packet.flags_fragment16 = swap16(offset);
     }
     packet.protocol = protocol;
     packet.ttl = IP_DEFALUT_TTL;
-    packet.hdr_checksum16 = swap16(0); // 先将校验和置0以运算校验和
+    // 先将校验和置0以运算校验和
+    packet.hdr_checksum16 = swap16(0);
     memcpy(packet.dst_ip, ip, NET_IP_LEN);
     memcpy(packet.src_ip, net_if_ip, NET_IP_LEN);
     packet.hdr_checksum16 = swap16(checksum16((uint16_t *)(&packet), sizeof(ip_hdr_t)));

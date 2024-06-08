@@ -30,15 +30,23 @@ void ethernet_in(buf_t *buf)
 void ethernet_out(buf_t *buf, const uint8_t *mac, net_protocol_t protocol)
 {
     // TO-DO
-    if(buf->len < 46){
+    // 如果buf的长度小于46，则向buf中添加填充
+    if (buf->len < 46)
+    {
         buf_add_padding(buf, 46 - buf->len);
     }
+    // 在buf的开头添加以太帧头
     buf_add_header(buf, sizeof(ether_hdr_t));
+    // 获取buf中的以太帧头
     ether_hdr_t *hdr = (ether_hdr_t *)buf->data;
+    // 将mac地址复制到hdr->dst中
     memcpy(hdr->dst, mac, sizeof(hdr->dst));
+    // 将NET_IF_MAC复制到hdr->src中
     uint8_t src[NET_MAC_LEN] = NET_IF_MAC;
     memcpy(hdr->src, src, sizeof(src));
+    // 将protocol转换为网络字节顺序
     hdr->protocol16 = swap16(protocol);
+    // 将buf发送出去
     driver_send(buf);
 }
 /**
